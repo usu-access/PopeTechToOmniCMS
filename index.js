@@ -19,9 +19,6 @@ function rawBody(req, res, next) {
 
 app.use(rawBody);
 
-// app.use(bodyParser.json()); //Handles JSON requests
-// app.use(bodyParser.urlencoded({extended:true}));
-
 var corsOptionsDelegate = function (req, callback) {
     var corsOptions;
     if (allowlist.indexOf(req.header('Origin')) !== -1) {
@@ -35,12 +32,6 @@ var corsOptionsDelegate = function (req, callback) {
 require('./src/routes/action-post')(app, cors, corsOptionsDelegate);
 
 var allowlist = ['https://usu-temp.oudemo.com'];
-
-// app.use(cors({
-//     origin: "https://usu-temp.oudemo.com",
-//     credentials: true,
-//     withCredentials:true
-//   }))
 
 app.listen(port, () => {
     console.log("server running on port 3005");

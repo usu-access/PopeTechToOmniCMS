@@ -6,9 +6,11 @@ const headers = {
 
 async function getGroupDetails(groupName) {
   try {
-    const response = await axios.get(`https://api.pope.tech/organizations/usu/groups?mode=select&search=${groupName}`, { headers });
+    const url = groupName === 'USU' ? `https://api.pope.tech/organizations/usu/groups`: `https://api.pope.tech/organizations/usu/groups?mode=select&search=${groupName}`;
+  
+    const response = await axios.get(url, { headers });
     const sites = response.data;
-    return sites.data[0].public_id;
+    return groupName === 'USU' ? sites.data.tree[0].public_id : sites.data[0].public_id;
   }
   catch(error){
     console.log(error)
@@ -49,6 +51,7 @@ async function getWebsites(groupPublicId) {
 
 async function getScanResults(websiteFilter) {
   try {
+    console.log(websiteFilter)
     const response1 = await axios.get(`https://api.pope.tech/organizations/usu/scans?website_filter=${websiteFilter}&limit=1&status=success`, { headers });
     const res1 = response1.data;
     const scanId = res1.data[0].public_id;
@@ -66,7 +69,7 @@ async function getScanResults(websiteFilter) {
 async function getFinalResults(userId) {
   try {
     const groups = await getUserDetails(userId);
-
+    console.log(groups);
     if(groups.length === 0){
       return [];
     }
@@ -75,21 +78,28 @@ async function getFinalResults(userId) {
     const websiteScan = [];
 
     for (const group of groups) {
-      // if(group.name.toLowerCase() === "usu"){
-      //   continue;
-      // }
       const groupFilter = await getGroupDetails(group.name);
-      sites.push(...await getWebsites(groupFilter));
-    }
+      const websites = await getWebsites(groupFilter);
 
-    for (const website of sites) {
-      const scanResult = await getScanResults(website.public_id);
-      // console.log(website);
+      var pages = 0;
+      var errors = 0;
+
+      for(var idx = 0; idx < websites.length; idx++){
+        const scanResult = await getScanResults(websites[idx].public_id);
+        pages += scanResult.pages;
+        errors += scanResult.errors + scanResult.contrast;
+        console.log(pages);
+      }
+
       websiteScan.push({
-        'website_name': website.name,
-        'full_url': website.full_url,
-        'result': scanResult
+        'website_name': group.name,
+        'full_url': `https://app.pope.tech/organization/usu/dashboard?group_filter=${group.public_id}`,
+        'result': {
+          pages : pages,
+          errors : errors
+        }
       });
+
     }
 
     return websiteScan;
