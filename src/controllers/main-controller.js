@@ -14,6 +14,7 @@ async function getGroupDetails(groupName) {
   }
   catch(error){
     console.log(error)
+    return '';
   }
 }
 
@@ -25,44 +26,47 @@ async function getUserDetails(userId) {
   }
   catch(error){
     console.log(error)
+    return []
   }
 }
 
-async function getWebsites(groupPublicId) {
-  try {
-    let page = 1;
-    let pageLength = 10;
-    const sites = [];
-
-    while (page <= pageLength) {
-      const response = await axios.get(`https://api.pope.tech/organizations/usu/websites?group_filter=${groupPublicId}&page=${page}`, { headers });
-      const res = response.data;
-      sites.push(...res.data);
-      pageLength = res.meta.pagination.last_page;
-      page += 1;
-    }
-
-    return sites;
-  }
-  catch(error){
-    console.log(error);
-  }
-}
 
 async function getScanResults(websiteFilter) {
   try {
     console.log(websiteFilter)
-    const response1 = await axios.get(`https://api.pope.tech/organizations/usu/scans?website_filter=${websiteFilter}&limit=1&status=success`, { headers });
-    const res1 = response1.data;
-    const scanId = res1.data[0].public_id;
+    var page_next = true
+    var page = 1
+    var total = 0
+    var errors = 0
 
-    const response2 = await axios.get(`https://api.pope.tech/organizations/usu/scans/${scanId}`, { headers });
-    const res2 = response2.data;
+    while(page_next){
+      console.log(page)
+      let response = await axios.get(`https://api.pope.tech/organizations/usu/reports/explore?group_filter=${websiteFilter}&page=${page}&limit=50`, { headers });
+      response = response.data;
 
-    return res2.data.totals[0].totals;
+      var pages = response['data']
+
+      pages.forEach(page => {
+        total += page['pages']
+        errors += page['errors']
+      });
+
+      page_next = response['meta']['pagination']['links']['next']
+      page += 1
+    }
+
+    return {
+      pages: total,
+      errors: errors
+    };
   }
   catch(error){
     console.log(error);
+
+    return {
+      pages: 0,
+      errors: 0
+    };
   }
 }
 
@@ -79,24 +83,15 @@ async function getFinalResults(userId) {
 
     for (const group of groups) {
       const groupFilter = await getGroupDetails(group.name);
-      const websites = await getWebsites(groupFilter);
-
-      var pages = 0;
-      var errors = 0;
-
-      for(var idx = 0; idx < websites.length; idx++){
-        const scanResult = await getScanResults(websites[idx].public_id);
-        pages += scanResult.pages;
-        errors += scanResult.errors + scanResult.contrast;
-        console.log(pages);
-      }
+      
+      const scanResult = await getScanResults(groupFilter);
 
       websiteScan.push({
         'website_name': group.name,
         'full_url': `https://app.pope.tech/organization/usu/dashboard?group_filter=${group.public_id}`,
         'result': {
-          pages : pages,
-          errors : errors
+          pages : scanResult['pages'],
+          errors : scanResult['errors']
         }
       });
 
