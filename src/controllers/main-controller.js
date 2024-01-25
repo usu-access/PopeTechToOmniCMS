@@ -39,12 +39,12 @@ async function getScanResults(websiteFilter) {
     var total = 0
     var errors = 0
 
-    let response = await axios.get(`https://api.pope.tech/organizations/usu/reports/explore?group_filter=${websiteFilter}&page=${page}&limit=50`, { headers });
+    let response = await axios.get(`https://api.pope.tech/organizations/usu/reports/aggregates?group_filter=${websiteFilter}`, { headers });
     response = response.data;
 
     errors = response["data"]["results"]["errors"]["total"]
     total = response["data"]["results"]["totals"]["pages"]
-    
+
     // while(page_next){
     //   console.log(page)
     //   let response = await axios.get(`https://api.pope.tech/organizations/usu/reports/explore?group_filter=${websiteFilter}&page=${page}&limit=50`, { headers });
