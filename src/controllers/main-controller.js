@@ -34,26 +34,32 @@ async function getUserDetails(userId) {
 async function getScanResults(websiteFilter) {
   try {
     console.log(websiteFilter)
-    var page_next = true
+    // var page_next = true
     var page = 1
     var total = 0
     var errors = 0
 
-    while(page_next){
-      console.log(page)
-      let response = await axios.get(`https://api.pope.tech/organizations/usu/reports/explore?group_filter=${websiteFilter}&page=${page}&limit=50`, { headers });
-      response = response.data;
+    let response = await axios.get(`https://api.pope.tech/organizations/usu/reports/explore?group_filter=${websiteFilter}&page=${page}&limit=50`, { headers });
+    response = response.data;
 
-      var pages = response['data']
+    errors = response["data"]["results"]["errors"]["total"]
+    total = response["data"]["results"]["totals"]["pages"]
+    
+    // while(page_next){
+    //   console.log(page)
+    //   let response = await axios.get(`https://api.pope.tech/organizations/usu/reports/explore?group_filter=${websiteFilter}&page=${page}&limit=50`, { headers });
+    //   response = response.data;
 
-      pages.forEach(page => {
-        total += page['pages']
-        errors += page['errors']
-      });
+    //   var pages = response['data']
 
-      page_next = response['meta']['pagination']['links']['next']
-      page += 1
-    }
+    //   pages.forEach(page => {
+    //     total += page['pages']
+    //     errors += page['errors']
+    //   });
+
+    //   page_next = response['meta']['pagination']['links']['next']
+    //   page += 1
+    // }
 
     return {
       pages: total,
